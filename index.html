@@ -1,0 +1,2172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cryptography Visualizer - RSA, ECC & DHKE</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0a0a2e;
+            color: #e0e0ff;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle 2s infinite alternate;
+        }
+
+        @keyframes twinkle {
+            0% { opacity: 0.2; }
+            100% { opacity: 1; }
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2.5em;
+            margin: 20px 0;
+            background: linear-gradient(135deg, #00d2ff, #7b2ff7, #ff6b6b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #8888bb;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .tabs {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            padding: 12px 30px;
+            border: 2px solid #333366;
+            background: rgba(20, 20, 60, 0.8);
+            color: #8888cc;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .tab-btn:hover {
+            border-color: #6666cc;
+            color: #aaaaff;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(100, 100, 255, 0.2);
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, #2a1f6e, #4a2f8e);
+            border-color: #7b2ff7;
+            color: #ffffff;
+            box-shadow: 0 5px 30px rgba(123, 47, 247, 0.3);
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card {
+            background: rgba(15, 15, 50, 0.9);
+            border: 1px solid #222255;
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .card h2 {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+            color: #bb99ff;
+        }
+
+        .card h3 {
+            font-size: 1.2em;
+            margin: 15px 0 10px;
+            color: #9999dd;
+        }
+
+        .card p {
+            color: #8888bb;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin: 15px 0;
+            align-items: flex-end;
+        }
+
+        .input-field {
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .input-field label {
+            display: block;
+            margin-bottom: 5px;
+            color: #9999cc;
+            font-size: 0.9em;
+            font-weight: 600;
+        }
+
+        .input-field input, .input-field select, .input-field textarea {
+            width: 100%;
+            padding: 10px 15px;
+            background: rgba(30, 30, 80, 0.8);
+            border: 1px solid #333366;
+            border-radius: 10px;
+            color: #ddddff;
+            font-size: 1em;
+            transition: all 0.3s ease;
+            font-family: 'Courier New', monospace;
+        }
+
+        .input-field textarea {
+            resize: vertical;
+            min-height: 60px;
+        }
+
+        .input-field input:focus, .input-field select:focus, .input-field textarea:focus {
+            outline: none;
+            border-color: #7b2ff7;
+            box-shadow: 0 0 15px rgba(123, 47, 247, 0.2);
+        }
+
+        .btn {
+            padding: 10px 25px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #7b2ff7, #4a1fb8);
+            color: white;
+            box-shadow: 0 4px 15px rgba(123, 47, 247, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(123, 47, 247, 0.5);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #00c853, #009624);
+            color: white;
+            box-shadow: 0 4px 15px rgba(0, 200, 83, 0.3);
+        }
+
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(0, 200, 83, 0.5);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ff5252, #d50000);
+            color: white;
+            box-shadow: 0 4px 15px rgba(255, 82, 82, 0.3);
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(255, 82, 82, 0.5);
+        }
+
+        .btn-info {
+            background: linear-gradient(135deg, #00b0ff, #0081cb);
+            color: white;
+            box-shadow: 0 4px 15px rgba(0, 176, 255, 0.3);
+        }
+
+        .btn-info:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(0, 176, 255, 0.5);
+        }
+
+        .btn-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .result-box {
+            background: rgba(20, 20, 60, 0.6);
+            border: 1px solid #333366;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            word-break: break-all;
+            line-height: 1.8;
+        }
+
+        .result-box .label {
+            color: #7b2ff7;
+            font-weight: 700;
+        }
+
+        .result-box .value {
+            color: #00d2ff;
+        }
+
+        .result-box .highlight {
+            color: #ff6b6b;
+            font-weight: 700;
+        }
+
+        .result-box .success {
+            color: #00c853;
+            font-weight: 700;
+        }
+
+        .step-indicator {
+            display: flex;
+            justify-content: center;
+            gap: 5px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        .step {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.9em;
+            border: 2px solid #333366;
+            background: rgba(20, 20, 60, 0.8);
+            color: #666699;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .step.active {
+            border-color: #7b2ff7;
+            background: linear-gradient(135deg, #2a1f6e, #4a2f8e);
+            color: white;
+            box-shadow: 0 0 20px rgba(123, 47, 247, 0.3);
+        }
+
+        .step.completed {
+            border-color: #00c853;
+            background: linear-gradient(135deg, #1b5e20, #2e7d32);
+            color: white;
+        }
+
+        .step-line {
+            width: 30px;
+            height: 2px;
+            background: #333366;
+            align-self: center;
+            transition: background 0.3s ease;
+        }
+
+        .step-line.completed {
+            background: #00c853;
+        }
+
+        /* Visualization Canvas */
+        .viz-container {
+            position: relative;
+            width: 100%;
+            height: 300px;
+            margin: 20px 0;
+            border-radius: 15px;
+            overflow: hidden;
+            background: rgba(5, 5, 30, 0.8);
+            border: 1px solid #222255;
+        }
+
+        .viz-canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Entity boxes */
+        .entity-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .entity-box {
+            flex: 1;
+            background: rgba(20, 20, 60, 0.6);
+            border: 2px solid #333366;
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .entity-box.alice {
+            border-color: #ff6b9d;
+        }
+
+        .entity-box.bob {
+            border-color: #00d2ff;
+        }
+
+        .entity-box.eve {
+            border-color: #ff5252;
+        }
+
+        .entity-box .avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            margin: 0 auto 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8em;
+        }
+
+        .entity-box.alice .avatar {
+            background: linear-gradient(135deg, #ff6b9d, #c94b7d);
+        }
+
+        .entity-box.bob .avatar {
+            background: linear-gradient(135deg, #00d2ff, #0091b8);
+        }
+
+        .entity-box .entity-name {
+            font-weight: 700;
+            font-size: 1.1em;
+            margin-bottom: 10px;
+        }
+
+        .entity-box .entity-data {
+            text-align: left;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85em;
+            color: #8888bb;
+            line-height: 1.8;
+        }
+
+        .entity-box .entity-data .key-label {
+            color: #9999dd;
+            font-weight: 600;
+        }
+
+        .arrow-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            min-width: 100px;
+            padding-top: 40px;
+        }
+
+        .arrow {
+            width: 100px;
+            height: 2px;
+            background: #7b2ff7;
+            position: relative;
+            margin: 10px 0;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .arrow.visible {
+            opacity: 1;
+        }
+
+        .arrow::after {
+            content: '►';
+            position: absolute;
+            right: -10px;
+            top: -8px;
+            color: #7b2ff7;
+        }
+
+        .arrow.reverse::after {
+            content: '◄';
+            left: -10px;
+            right: auto;
+        }
+
+        .arrow-label {
+            font-size: 0.75em;
+            color: #7b2ff7;
+            text-align: center;
+            max-width: 100px;
+            word-break: break-all;
+        }
+
+        /* Animation for messages */
+        .message-packet {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+            animation: pulse 2s infinite;
+            margin: 5px 0;
+        }
+
+        .message-packet.encrypted {
+            background: rgba(123, 47, 247, 0.2);
+            border: 1px solid #7b2ff7;
+            color: #bb99ff;
+        }
+
+        .message-packet.decrypted {
+            background: rgba(0, 200, 83, 0.2);
+            border: 1px solid #00c853;
+            color: #66ff99;
+        }
+
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 5px rgba(123, 47, 247, 0.2); }
+            50% { box-shadow: 0 0 20px rgba(123, 47, 247, 0.4); }
+        }
+
+        /* Math display */
+        .math-box {
+            background: rgba(30, 20, 60, 0.8);
+            border: 1px solid #443388;
+            border-radius: 10px;
+            padding: 15px 20px;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+            text-align: center;
+            font-size: 1.1em;
+            color: #ddbbff;
+            overflow-x: auto;
+        }
+
+        .math-box .op {
+            color: #ff6b6b;
+        }
+
+        .math-box .num {
+            color: #00d2ff;
+        }
+
+        .math-box .result {
+            color: #00c853;
+            font-weight: 700;
+        }
+
+        /* ECC specific */
+        .ecc-point {
+            display: inline-block;
+            padding: 3px 10px;
+            background: rgba(123, 47, 247, 0.2);
+            border: 1px solid #7b2ff7;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85em;
+            color: #bb99ff;
+            margin: 2px;
+        }
+
+        /* Log area */
+        .log-area {
+            background: rgba(5, 5, 20, 0.9);
+            border: 1px solid #222244;
+            border-radius: 10px;
+            padding: 15px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85em;
+            line-height: 1.6;
+            margin-top: 15px;
+        }
+
+        .log-area .log-entry {
+            padding: 3px 0;
+            border-bottom: 1px solid rgba(50, 50, 100, 0.3);
+        }
+
+        .log-area .log-step {
+            color: #7b2ff7;
+            font-weight: 700;
+        }
+
+        .log-area .log-math {
+            color: #00d2ff;
+        }
+
+        .log-area .log-result {
+            color: #00c853;
+        }
+
+        .log-area .log-warn {
+            color: #ffab40;
+        }
+
+        /* Tooltip */
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            cursor: help;
+            border-bottom: 1px dashed #7b2ff7;
+        }
+
+        .tooltip .tooltip-text {
+            visibility: hidden;
+            background: rgba(20, 10, 50, 0.95);
+            color: #ddddff;
+            text-align: left;
+            padding: 10px 15px;
+            border-radius: 8px;
+            border: 1px solid #7b2ff7;
+            position: absolute;
+            z-index: 100;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 250px;
+            font-size: 0.85em;
+            line-height: 1.5;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        .tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            h1 { font-size: 1.8em; }
+            .entity-row { flex-direction: column; }
+            .arrow-container { 
+                transform: rotate(90deg);
+                min-width: auto;
+                padding-top: 0;
+            }
+            .card { padding: 15px; }
+        }
+
+        .info-banner {
+            background: linear-gradient(135deg, rgba(123, 47, 247, 0.1), rgba(0, 210, 255, 0.1));
+            border: 1px solid #333366;
+            border-radius: 12px;
+            padding: 15px 20px;
+            margin: 15px 0;
+            font-size: 0.9em;
+            color: #aaaadd;
+            line-height: 1.6;
+        }
+
+        .info-banner strong {
+            color: #bb99ff;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .grid-2 { grid-template-columns: 1fr; }
+        }
+
+        .number-highlight {
+            color: #00d2ff;
+            font-weight: 700;
+            font-family: 'Courier New', monospace;
+        }
+
+        .animate-glow {
+            animation: glowPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes glowPulse {
+            0%, 100% { box-shadow: 0 0 5px rgba(123, 47, 247, 0.2); }
+            50% { box-shadow: 0 0 30px rgba(123, 47, 247, 0.5); }
+        }
+
+        .lock-icon::before { content: '🔒 '; }
+        .unlock-icon::before { content: '🔓 '; }
+        .key-icon::before { content: '🔑 '; }
+        .send-icon::before { content: '📤 '; }
+
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: #222255;
+            border-radius: 2px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .progress-bar .progress {
+            height: 100%;
+            background: linear-gradient(90deg, #7b2ff7, #00d2ff);
+            border-radius: 2px;
+            transition: width 0.5s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="stars" id="stars"></div>
+    
+    <div class="container">
+        <h1>🔐 Cryptography Visualizer</h1>
+        <p class="subtitle">Interactive exploration of RSA, Elliptic Curve Cryptography & Diffie-Hellman Key Exchange</p>
+
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('rsa')">🔑 RSA</button>
+            <button class="tab-btn" onclick="switchTab('ecc')">📈 ECC</button>
+            <button class="tab-btn" onclick="switchTab('dhke')">🤝 DHKE</button>
+        </div>
+
+        <!-- RSA TAB -->
+        <div class="tab-content active" id="tab-rsa">
+            <div class="card">
+                <h2>🔑 RSA (Rivest-Shamir-Adleman)</h2>
+                <p>RSA is an asymmetric encryption algorithm based on the mathematical difficulty of factoring large prime numbers. It uses a public key for encryption and a private key for decryption.</p>
+                
+                <div class="info-banner">
+                    <strong>How it works:</strong> Choose two prime numbers p and q. Compute n = p × q and φ(n) = (p-1)(q-1). Choose e coprime to φ(n), then compute d = e⁻¹ mod φ(n). Public key is (e, n), private key is (d, n).
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Step 1: Key Generation</h3>
+                <div class="step-indicator" id="rsa-steps">
+                    <div class="step active" id="rsa-step-1">1</div>
+                    <div class="step-line" id="rsa-line-1"></div>
+                    <div class="step" id="rsa-step-2">2</div>
+                    <div class="step-line" id="rsa-line-2"></div>
+                    <div class="step" id="rsa-step-3">3</div>
+                    <div class="step-line" id="rsa-line-3"></div>
+                    <div class="step" id="rsa-step-4">4</div>
+                    <div class="step-line" id="rsa-line-4"></div>
+                    <div class="step" id="rsa-step-5">5</div>
+                </div>
+
+                <div class="input-group">
+                    <div class="input-field">
+                        <label>Prime p 
+                            <span class="tooltip">ℹ️
+                                <span class="tooltip-text">Choose a prime number. For demonstration we use small primes. In real RSA, these are 1024+ bits.</span>
+                            </span>
+                        </label>
+                        <input type="number" id="rsa-p" value="61" min="2" max="9999">
+                    </div>
+                    <div class="input-field">
+                        <label>Prime q 
+                            <span class="tooltip">ℹ️
+                                <span class="tooltip-text">Choose another prime number different from p.</span>
+                            </span>
+                        </label>
+                        <input type="number" id="rsa-q" value="53" min="2" max="9999">
+                    </div>
+                    <div class="input-field">
+                        <label>Public exponent e 
+                            <span class="tooltip">ℹ️
+                                <span class="tooltip-text">Must be coprime to φ(n). Common choices: 3, 17, 65537.</span>
+                            </span>
+                        </label>
+                        <input type="number" id="rsa-e" value="17" min="2">
+                    </div>
+                </div>
+
+                <div class="btn-group">
+                    <button class="btn btn-primary" onclick="rsaGenerateKeys()">🔑 Generate Keys</button>
+                    <button class="btn btn-info" onclick="rsaRandomPrimes()">🎲 Random Primes</button>
+                </div>
+
+                <div id="rsa-keygen-result" class="result-box" style="display:none;"></div>
+            </div>
+
+            <div class="card">
+                <h3>Step 2: Encrypt & Decrypt</h3>
+                <div class="input-group">
+                    <div class="input-field" style="flex: 2;">
+                        <label>Message (number, must be &lt; n)</label>
+                        <input type="number" id="rsa-message" value="42" min="0">
+                    </div>
+                </div>
+
+                <div class="btn-group">
+                    <button class="btn btn-success lock-icon" onclick="rsaEncrypt()">Encrypt</button>
+                    <button class="btn btn-danger unlock-icon" onclick="rsaDecrypt()">Decrypt</button>
+                </div>
+
+                <div class="entity-row" id="rsa-entity-row">
+                    <div class="entity-box alice">
+                        <div class="avatar">👩</div>
+                        <div class="entity-name">Alice (Sender)</div>
+                        <div class="entity-data" id="rsa-alice-data">
+                            <span class="key-label">Has:</span> Bob's public key<br>
+                            <span class="key-label">Message:</span> <span id="rsa-alice-msg">—</span><br>
+                            <span class="key-label">Encrypted:</span> <span id="rsa-alice-enc">—</span>
+                        </div>
+                    </div>
+                    <div class="arrow-container">
+                        <div class="arrow visible" id="rsa-arrow-1">
+                            <span class="arrow-label" id="rsa-arrow-label">ciphertext</span>
+                        </div>
+                    </div>
+                    <div class="entity-box bob">
+                        <div class="avatar">👨</div>
+                        <div class="entity-name">Bob (Receiver)</div>
+                        <div class="entity-data" id="rsa-bob-data">
+                            <span class="key-label">Has:</span> Private key<br>
+                            <span class="key-label">Received:</span> <span id="rsa-bob-enc">—</span><br>
+                            <span class="key-label">Decrypted:</span> <span id="rsa-bob-dec">—</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="rsa-enc-result" class="result-box" style="display:none;"></div>
+            </div>
+
+            <div class="card">
+                <h3>📊 Computation Log</h3>
+                <div class="log-area" id="rsa-log">
+                    <div class="log-entry"><span class="log-step">[INFO]</span> Configure primes p and q, then click "Generate Keys" to begin.</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>🎨 RSA Visualization</h3>
+                <div class="viz-container">
+                    <canvas class="viz-canvas" id="rsa-canvas"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- ECC TAB -->
+        <div class="tab-content" id="tab-ecc">
+            <div class="card">
+                <h2>📈 Elliptic Curve Cryptography (ECC)</h2>
+                <p>ECC is based on the algebraic structure of elliptic curves over finite fields. It offers the same level of security as RSA with much smaller key sizes.</p>
+                
+                <div class="info-banner">
+                    <strong>Curve equation:</strong> y² = x³ + ax + b (mod p)<br>
+                    <strong>Key idea:</strong> Given a base point G and a scalar k, computing Q = kG is easy, but finding k from Q and G (the Elliptic Curve Discrete Log Problem) is extremely hard.
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Step 1: Define Curve Parameters</h3>
+                <div class="input-group">
+                    <div class="input-field">
+                        <label>a (curve parameter)</label>
+                        <input type="number" id="ecc-a" value="2" min="-100" max="100">
+                    </div>
+                    <div class="input-field">
+                        <label>b (curve parameter)</label>
+                        <input type="number" id="ecc-b" value="3" min="-100" max="100">
+                    </div>
+                    <div class="input-field">
+                        <label>p (prime modulus)</label>
+                        <input type="number" id="ecc-p" value="97" min="5" max="997">
+                    </div>
+                </div>
+
+                <div class="btn-group">
+                    <button class="btn btn-primary" onclick="eccSetupCurve()">📐 Setup Curve</button>
+                    <button class="btn btn-info" onclick="eccPreset()">📋 Load Preset</button>
+                </div>
+
+                <div id="ecc-curve-info" class="result-box" style="display:none;"></div>
+            </div>
+
+            <div class="card">
+                <h3>Step 2: Key Generation & Encryption</h3>
+                <div class="input-group">
+                    <div class="input-field">
+                        <label>Generator Point Gx</label>
+                        <input type="number" id="ecc-gx" value="3" min="0">
+                    </div>
+                    <div class="input-field">
+                        <label>Generator Point Gy</label>
+                        <input type="number" id="ecc-gy" value="6" min="0">
+                    </div>
+                    <div class="input-field">
+                        <label>Private Key (scalar k)</label>
+                        <input type="number" id="ecc-k" value="7" min="1" max="96">
+                    </div>
+                </div>
+
+                <div class="btn-group">
+                    <button class="btn btn-primary" onclick="eccGenerateKeys()">🔑 Generate Keys</button>
+                    <button class="btn btn-success" onclick="eccComputeScalarMul()">✖️ Scalar Multiply</button>
+                </div>
+
+                <div id="ecc-key-result" class="result-box" style="display:none;"></div>
+            </div>
+
+            <div class="card">
+                <h3>Step 3: ECC Diffie-Hellman Simulation</h3>
+                <div class="input-group">
+                    <div class="input-field">
+                        <label>Alice's private key (a)</label>
+                        <input type="number" id="ecc-alice-k" value="7" min="1">
+                    </div>
+                    <div class="input-field">
+                        <label>Bob's private key (b)</label>
+                        <input type="number" id="ecc-bob-k" value="11" min="1">
+                    </div>
+                </div>
+
+                <div class="btn-group">
+                    <button class="btn btn-primary" onclick="eccDHSimulation()">🤝 Run ECDH Key Exchange</button>
+                </div>
+
+                <div class="entity-row" id="ecc-entity-row" style="display:none;">
+                    <div class="entity-box alice">
+                        <div class="avatar">👩</div>
+                        <div class="entity-name">Alice</div>
+                        <div class="entity-data" id="ecc-alice-data"></div>
+                    </div>
+                    <div class="arrow-container">
+                        <div class="arrow visible"><span class="arrow-label">Public Points</span></div>
+                        <div class="arrow visible reverse"><span class="arrow-label">Exchange</span></div>
+                    </div>
+                    <div class="entity-box bob">
+                        <div class="avatar">👨</div>
+                        <div class="entity-name">Bob</div>
+                        <div class="entity-data" id="ecc-bob-data"></div>
+                    </div>
+                </div>
+
+                <div id="ecc-dh-result" class="result-box" style="display:none;"></div>
+            </div>
+
+            <div class="card">
+                <h3>📊 Computation Log</h3>
+                <div class="log-area" id="ecc-log">
+                    <div class="log-entry"><span class="log-step">[INFO]</span> Setup curve parameters and click "Setup Curve" to begin.</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>🎨 Elliptic Curve Visualization</h3>
+                <div class="viz-container">
+                    <canvas class="viz-canvas" id="ecc-canvas"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- DHKE TAB -->
+        <div class="tab-content" id="tab-dhke">
+            <div class="card">
+                <h2>🤝 Diffie-Hellman Key Exchange (DHKE)</h2>
+                <p>DHKE allows two parties to establish a shared secret over an insecure channel without prior shared secrets. It's based on the difficulty of the Discrete Logarithm Problem.</p>
+                
+                <div class="info-banner">
+                    <strong>Protocol:</strong><br>
+                    1. Agree on public parameters: prime p and generator g<br>
+                    2. Alice picks secret a, sends A = g^a mod p<br>
+                    3. Bob picks secret b, sends B = g^b mod p<br>
+                    4. Shared secret: Alice computes B^a mod p, Bob computes A^b mod p<br>
+                    <strong>Both get:</strong> g^(ab) mod p — the same shared secret!
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Step 1: Public Parameters</h3>
+                <div class="step-indicator" id="dhke-steps">
+                    <div class="step active" id="dhke-step-1">1</div>
+                    <div class="step-line" id="dhke-line-1"></div>
+                    <div class="step" id="dhke-step-2">2</div>
+                    <div class="step-line" id="dhke-line-2"></div>
+                    <div class="step" id="dhke-step-3">3</div>
+                    <div class="step-line" id="dhke-line-3"></div>
+                    <div class="step" id="dhke-step-4">4</div>
+                </div>
+
+                <div class="input-group">
+                    <div class="input-field">
+                        <label>Prime p 
+                            <span class="tooltip">ℹ️
+                                <span class="tooltip-text">A large prime number. In practice this would be thousands of bits.</span>
+                            </span>
+                        </label>
+                        <input type="number" id="dhke-p" value="23" min="3" max="9999">
+                    </div>
+                    <div class="input-field">
+                        <label>Generator g 
+                            <span class="tooltip">ℹ️
+                                <span class="tooltip-text">A primitive root modulo p. It generates all elements in the group.</span>
+                            </span>
+                        </label>
+                        <input type="number" id="dhke-g" value="5" min="2">
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Step 2: Private Keys</h3>
+                <div class="input-group">
+                    <div class="input-field">
+                        <label>Alice's secret (a)</label>
+                        <input type="number" id="dhke-a" value="6" min="1">
+                    </div>
+                    <div class="input-field">
+                        <label>Bob's secret (b)</label>
+                        <input type="number" id="dhke-b" value="15" min="1">
+                    </div>
+                </div>
+
+                <div class="btn-group">
+                    <button class="btn btn-primary" onclick="dhkeExchange()">🤝 Perform Key Exchange</button>
+                    <button class="btn btn-info" onclick="dhkeStepByStep()">👣 Step-by-Step</button>
+                    <button class="btn btn-danger" onclick="dhkeReset()">🔄 Reset</button>
+                </div>
+            </div>
+
+            <div class="card" id="dhke-viz-card">
+                <h3>🎭 Exchange Visualization</h3>
+                
+                <div class="entity-row">
+                    <div class="entity-box alice" id="dhke-alice-box">
+                        <div class="avatar">👩</div>
+                        <div class="entity-name">Alice</div>
+                        <div class="entity-data" id="dhke-alice-data">
+                            <span class="key-label">Secret a:</span> <span id="dhke-alice-secret">—</span><br>
+                            <span class="key-label">Public A:</span> <span id="dhke-alice-public">—</span><br>
+                            <span class="key-label">Shared Secret:</span> <span id="dhke-alice-shared">—</span>
+                        </div>
+                    </div>
+                    <div class="arrow-container" id="dhke-arrows">
+                        <div class="arrow" id="dhke-arrow-1"><span class="arrow-label" id="dhke-arrow-1-label">A = ?</span></div>
+                        <div style="text-align:center;color:#666;font-size:0.8em;margin:5px 0;" id="dhke-public-info">Public Channel</div>
+                        <div class="arrow reverse" id="dhke-arrow-2"><span class="arrow-label" id="dhke-arrow-2-label">B = ?</span></div>
+                    </div>
+                    <div class="entity-box bob" id="dhke-bob-box">
+                        <div class="avatar">👨</div>
+                        <div class="entity-name">Bob</div>
+                        <div class="entity-data" id="dhke-bob-data">
+                            <span class="key-label">Secret b:</span> <span id="dhke-bob-secret">—</span><br>
+                            <span class="key-label">Public B:</span> <span id="dhke-bob-public">—</span><br>
+                            <span class="key-label">Shared Secret:</span> <span id="dhke-bob-shared">—</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="dhke-result" class="result-box" style="display:none;"></div>
+            </div>
+
+            <div class="card">
+                <h3>📊 Computation Log</h3>
+                <div class="log-area" id="dhke-log">
+                    <div class="log-entry"><span class="log-step">[INFO]</span> Set public parameters and private keys, then perform the exchange.</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>🎨 Modular Exponentiation Visualization</h3>
+                <div class="viz-container">
+                    <canvas class="viz-canvas" id="dhke-canvas"></canvas>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>🕵️ Eve's Perspective (Eavesdropper)</h3>
+                <div class="info-banner">
+                    Eve can see the public values: <strong>p</strong>, <strong>g</strong>, <strong>A = g^a mod p</strong>, and <strong>B = g^b mod p</strong>.<br>
+                    But to find the shared secret, she would need to solve the Discrete Logarithm Problem — finding a from g^a mod p — which is computationally infeasible for large primes!
+                </div>
+                <div id="dhke-eve-result" class="result-box" style="display:none;"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============ UTILITY FUNCTIONS ============
+        function mod(n, m) {
+            return ((n % m) + m) % m;
+        }
+
+        function modPow(base, exp, modulus) {
+            if (modulus === 1) return 0;
+            let result = 1n;
+            base = BigInt(base) % BigInt(modulus);
+            exp = BigInt(exp);
+            modulus = BigInt(modulus);
+            while (exp > 0n) {
+                if (exp % 2n === 1n) {
+                    result = (result * base) % modulus;
+                }
+                exp = exp / 2n;
+                base = (base * base) % modulus;
+            }
+            return Number(result);
+        }
+
+        function gcd(a, b) {
+            a = Math.abs(a);
+            b = Math.abs(b);
+            while (b) {
+                [a, b] = [b, a % b];
+            }
+            return a;
+        }
+
+        function extGcd(a, b) {
+            if (a === 0) return [b, 0, 1];
+            let [g, x, y] = extGcd(b % a, a);
+            return [g, y - Math.floor(b / a) * x, x];
+        }
+
+        function modInverse(a, m) {
+            let [g, x] = extGcd(mod(a, m), m);
+            if (g !== 1) return null;
+            return mod(x, m);
+        }
+
+        function isPrime(n) {
+            if (n < 2) return false;
+            if (n < 4) return true;
+            if (n % 2 === 0 || n % 3 === 0) return false;
+            for (let i = 5; i * i <= n; i += 6) {
+                if (n % i === 0 || n % (i + 2) === 0) return false;
+            }
+            return true;
+        }
+
+        function randomPrime(min, max) {
+            let attempts = 0;
+            while (attempts < 10000) {
+                let n = Math.floor(Math.random() * (max - min + 1)) + min;
+                if (isPrime(n)) return n;
+                attempts++;
+            }
+            return 61;
+        }
+
+        // ============ STARS BACKGROUND ============
+        function createStars() {
+            const container = document.getElementById('stars');
+            for (let i = 0; i < 100; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                star.style.left = Math.random() * 100 + '%';
+                star.style.top = Math.random() * 100 + '%';
+                const size = Math.random() * 3 + 1;
+                star.style.width = size + 'px';
+                star.style.height = size + 'px';
+                star.style.animationDelay = Math.random() * 2 + 's';
+                star.style.animationDuration = (Math.random() * 2 + 1) + 's';
+                container.appendChild(star);
+            }
+        }
+        createStars();
+
+        // ============ TAB SWITCHING ============
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('tab-' + tab).classList.add('active');
+            event.target.classList.add('active');
+            
+            if (tab === 'ecc') setTimeout(drawECCCurve, 100);
+            if (tab === 'dhke') setTimeout(drawDHKECanvas, 100);
+            if (tab === 'rsa') setTimeout(drawRSACanvas, 100);
+        }
+
+        // ============ LOGGING ============
+        function addLog(logId, message, type = 'step') {
+            const log = document.getElementById(logId);
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.innerHTML = `<span class="log-${type}">[${type.toUpperCase()}]</span> ${message}`;
+            log.appendChild(entry);
+            log.scrollTop = log.scrollHeight;
+        }
+
+        function clearLog(logId) {
+            document.getElementById(logId).innerHTML = '';
+        }
+
+        // ============ RSA IMPLEMENTATION ============
+        let rsaState = {};
+
+        function rsaRandomPrimes() {
+            document.getElementById('rsa-p').value = randomPrime(50, 200);
+            document.getElementById('rsa-q').value = randomPrime(50, 200);
+        }
+
+        function updateRSASteps(step) {
+            for (let i = 1; i <= 5; i++) {
+                const el = document.getElementById('rsa-step-' + i);
+                const line = document.getElementById('rsa-line-' + (i - 1));
+                el.classList.remove('active', 'completed');
+                if (line) line.classList.remove('completed');
+                if (i < step) {
+                    el.classList.add('completed');
+                    if (line) line.classList.add('completed');
+                } else if (i === step) {
+                    el.classList.add('active');
+                }
+            }
+        }
+
+        function rsaGenerateKeys() {
+            clearLog('rsa-log');
+            const p = parseInt(document.getElementById('rsa-p').value);
+            const q = parseInt(document.getElementById('rsa-q').value);
+            const e = parseInt(document.getElementById('rsa-e').value);
+
+            addLog('rsa-log', `Starting RSA key generation...`, 'step');
+
+            // Validate primes
+            if (!isPrime(p)) {
+                addLog('rsa-log', `❌ ${p} is NOT a prime number!`, 'warn');
+                return;
+            }
+            if (!isPrime(q)) {
+                addLog('rsa-log', `❌ ${q} is NOT a prime number!`, 'warn');
+                return;
+            }
+            if (p === q) {
+                addLog('rsa-log', `❌ p and q must be different primes!`, 'warn');
+                return;
+            }
+
+            updateRSASteps(1);
+            addLog('rsa-log', `✅ p = ${p} is prime`, 'result');
+            addLog('rsa-log', `✅ q = ${q} is prime`, 'result');
+
+            // Compute n
+            const n = p * q;
+            addLog('rsa-log', `n = p × q = ${p} × ${q} = ${n}`, 'math');
+            updateRSASteps(2);
+
+            // Compute phi(n)
+            const phi = (p - 1) * (q - 1);
+            addLog('rsa-log', `φ(n) = (p-1)(q-1) = ${p - 1} × ${q - 1} = ${phi}`, 'math');
+            updateRSASteps(3);
+
+            // Validate e
+            if (gcd(e, phi) !== 1) {
+                addLog('rsa-log', `❌ e=${e} is NOT coprime to φ(n)=${phi}. GCD = ${gcd(e, phi)}`, 'warn');
+                return;
+            }
+            addLog('rsa-log', `✅ GCD(e, φ(n)) = GCD(${e}, ${phi}) = 1 ✓`, 'result');
+            updateRSASteps(4);
+
+            // Compute d
+            const d = modInverse(e, phi);
+            if (d === null) {
+                addLog('rsa-log', `❌ Could not compute modular inverse!`, 'warn');
+                return;
+            }
+            addLog('rsa-log', `d = e⁻¹ mod φ(n) = ${e}⁻¹ mod ${phi} = ${d}`, 'math');
+            addLog('rsa-log', `Verify: e × d mod φ(n) = ${e} × ${d} mod ${phi} = ${(e * d) % phi}`, 'math');
+            updateRSASteps(5);
+
+            rsaState = { p, q, n, phi, e, d };
+
+            const resultDiv = document.getElementById('rsa-keygen-result');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = `
+                <span class="label">📐 n = p × q =</span> <span class="value">${n}</span><br>
+                <span class="label">📐 φ(n) = (p-1)(q-1) =</span> <span class="value">${phi}</span><br>
+                <br>
+                <span class="label">🔓 Public Key (e, n) =</span> <span class="success">(${e}, ${n})</span><br>
+                <span class="label">🔒 Private Key (d, n) =</span> <span class="highlight">(${d}, ${n})</span><br>
+                <br>
+                <span class="label">Verification:</span> <span class="value">e × d mod φ(n) = ${e} × ${d} mod ${phi} = ${mod(e * d, phi)}</span>
+            `;
+
+            addLog('rsa-log', `🎉 Key generation complete!`, 'result');
+            addLog('rsa-log', `Public Key: (${e}, ${n})`, 'result');
+            addLog('rsa-log', `Private Key: (${d}, ${n})`, 'result');
+
+            drawRSACanvas();
+        }
+
+        function rsaEncrypt() {
+            if (!rsaState.n) {
+                addLog('rsa-log', '❌ Generate keys first!', 'warn');
+                return;
+            }
+
+            const m = parseInt(document.getElementById('rsa-message').value);
+            if (m >= rsaState.n) {
+                addLog('rsa-log', `❌ Message ${m} must be less than n=${rsaState.n}`, 'warn');
+                return;
+            }
+
+            const c = modPow(m, rsaState.e, rsaState.n);
+            rsaState.ciphertext = c;
+            rsaState.plaintext = m;
+
+            addLog('rsa-log', `--- Encryption ---`, 'step');
+            addLog('rsa-log', `c = m^e mod n = ${m}^${rsaState.e} mod ${rsaState.n} = ${c}`, 'math');
+
+            document.getElementById('rsa-alice-msg').textContent = m;
+            document.getElementById('rsa-alice-enc').innerHTML = `<span class="message-packet encrypted">${c}</span>`;
+            document.getElementById('rsa-bob-enc').innerHTML = `<span class="message-packet encrypted">${c}</span>`;
+            document.getElementById('rsa-arrow-1').classList.add('visible');
+            document.getElementById('rsa-arrow-label').textContent = `c = ${c}`;
+
+            const resultDiv = document.getElementById('rsa-enc-result');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = `
+                <span class="label">📨 Plaintext:</span> <span class="value">${m}</span><br>
+                <span class="label">🔒 Encryption: c = m<sup>e</sup> mod n =</span> <span class="value">${m}<sup>${rsaState.e}</sup> mod ${rsaState.n}</span> = <span class="highlight">${c}</span>
+            `;
+
+            drawRSACanvas();
+        }
+
+        function rsaDecrypt() {
+            if (!rsaState.ciphertext && rsaState.ciphertext !== 0) {
+                addLog('rsa-log', '❌ Encrypt a message first!', 'warn');
+                return;
+            }
+
+            const c = rsaState.ciphertext;
+            const m = modPow(c, rsaState.d, rsaState.n);
+
+            addLog('rsa-log', `--- Decryption ---`, 'step');
+            addLog('rsa-log', `m = c^d mod n = ${c}^${rsaState.d} mod ${rsaState.n} = ${m}`, 'math');
+            addLog('rsa-log', `✅ Original message recovered: ${m}`, 'result');
+
+            document.getElementById('rsa-bob-dec').innerHTML = `<span class="message-packet decrypted">${m}</span>`;
+
+            const resultDiv = document.getElementById('rsa-enc-result');
+            resultDiv.innerHTML += `<br><span class="label">🔓 Decryption: m = c<sup>d</sup> mod n =</span> <span class="value">${c}<sup>${rsaState.d}</sup> mod ${rsaState.n}</span> = <span class="success">${m}</span>`;
+
+            if (m === rsaState.plaintext) {
+                resultDiv.innerHTML += `<br><br><span class="success">✅ SUCCESS: Decrypted message matches original! (${m} = ${rsaState.plaintext})</span>`;
+            }
+
+            drawRSACanvas();
+        }
+
+        // ============ RSA CANVAS ============
+        function drawRSACanvas() {
+            const canvas = document.getElementById('rsa-canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = canvas.parentElement.clientWidth;
+            canvas.height = canvas.parentElement.clientHeight;
+
+            const w = canvas.width, h = canvas.height;
+            ctx.clearRect(0, 0, w, h);
+
+            // Background grid
+            ctx.strokeStyle = 'rgba(50, 50, 100, 0.3)';
+            ctx.lineWidth = 0.5;
+            for (let x = 0; x < w; x += 30) {
+                ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
+            }
+            for (let y = 0; y < h; y += 30) {
+                ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+            }
+
+            if (!rsaState.n) {
+                ctx.fillStyle = '#666699';
+                ctx.font = '16px Segoe UI';
+                ctx.textAlign = 'center';
+                ctx.fillText('Generate RSA keys to see the visualization', w / 2, h / 2);
+                return;
+            }
+
+            // Draw key pair visualization
+            const centerX = w / 2;
+            const centerY = h / 2;
+
+            // Public key (left)
+            ctx.fillStyle = 'rgba(0, 200, 83, 0.1)';
+            ctx.strokeStyle = '#00c853';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(centerX - 150, centerY - 30, 60, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.fillStyle = '#00c853';
+            ctx.font = 'bold 14px Segoe UI';
+            ctx.textAlign = 'center';
+            ctx.fillText('Public Key', centerX - 150, centerY - 55);
+            ctx.font = '12px Courier New';
+            ctx.fillText(`e = ${rsaState.e}`, centerX - 150, centerY - 30);
+            ctx.fillText(`n = ${rsaState.n}`, centerX - 150, centerY - 10);
+
+            // Private key (right)
+            ctx.fillStyle = 'rgba(255, 82, 82, 0.1)';
+            ctx.strokeStyle = '#ff5252';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(centerX + 150, centerY - 30, 60, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.fillStyle = '#ff5252';
+            ctx.font = 'bold 14px Segoe UI';
+            ctx.fillText('Private Key', centerX + 150, centerY - 55);
+            ctx.font = '12px Courier New';
+            ctx.fillText(`d = ${rsaState.d}`, centerX + 150, centerY - 30);
+            ctx.fillText(`n = ${rsaState.n}`, centerX + 150, centerY - 10);
+
+            // Connection
+            ctx.strokeStyle = 'rgba(123, 47, 247, 0.5)';
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath();
+            ctx.moveTo(centerX - 90, centerY - 30);
+            ctx.lineTo(centerX + 90, centerY - 30);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            ctx.fillStyle = '#7b2ff7';
+            ctx.font = '11px Courier New';
+            ctx.fillText(`φ(n) = ${rsaState.phi}`, centerX, centerY - 40);
+            ctx.fillText(`e×d mod φ(n) = 1`, centerX, centerY - 20);
+
+            // Encryption flow
+            if (rsaState.ciphertext !== undefined) {
+                ctx.fillStyle = '#00d2ff';
+                ctx.font = '12px Courier New';
+                ctx.fillText(`Plaintext: ${rsaState.plaintext}`, centerX - 150, centerY + 50);
+                ctx.fillText(`→ m^e mod n →`, centerX, centerY + 50);
+                ctx.fillStyle = '#ff6b6b';
+                ctx.fillText(`Ciphertext: ${rsaState.ciphertext}`, centerX + 150, centerY + 50);
+
+                // Arrow
+                ctx.strokeStyle = '#7b2ff7';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(centerX - 80, centerY + 47);
+                ctx.lineTo(centerX + 80, centerY + 47);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(centerX + 75, centerY + 42);
+                ctx.lineTo(centerX + 80, centerY + 47);
+                ctx.lineTo(centerX + 75, centerY + 52);
+                ctx.fill();
+            }
+
+            // Number line showing modular arithmetic
+            const lineY = h - 40;
+            ctx.strokeStyle = 'rgba(100, 100, 200, 0.3)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(20, lineY);
+            ctx.lineTo(w - 20, lineY);
+            ctx.stroke();
+
+            const numCount = Math.min(rsaState.n, 40);
+            const spacing = (w - 40) / numCount;
+            for (let i = 0; i <= numCount; i++) {
+                const x = 20 + i * spacing;
+                ctx.fillStyle = 'rgba(100, 100, 200, 0.5)';
+                ctx.font = '9px Courier New';
+                ctx.fillText(i, x, lineY + 15);
+                ctx.beginPath();
+                ctx.arc(x, lineY, 2, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        // ============ ECC IMPLEMENTATION ============
+        let eccState = {};
+
+        function eccModSqrt(n, p) {
+            n = mod(n, p);
+            if (n === 0) return 0;
+            if (p % 4 === 3) {
+                let r = modPow(n, (p + 1) / 4, p);
+                if (mod(r * r, p) === n) return r;
+                return null;
+            }
+            // Tonelli-Shanks
+            let q = p - 1, s = 0;
+            while (q % 2 === 0) { q /= 2; s++; }
+            let z = 2;
+            while (modPow(z, (p - 1) / 2, p) !== p - 1) z++;
+            let m = s;
+            let c = modPow(z, q, p);
+            let t = modPow(n, q, p);
+            let r = modPow(n, (q + 1) / 2, p);
+            while (true) {
+                if (t === 1) return r;
+                let i = 1, temp = mod(t * t, p);
+                while (temp !== 1) { temp = mod(temp * temp, p); i++; }
+                let b = c;
+                for (let j = 0; j < m - i - 1; j++) b = mod(b * b, p);
+                m = i;
+                c = mod(b * b, p);
+                t = mod(t * c, p);
+                r = mod(r * b, p);
+            }
+        }
+
+        function eccPointAdd(P, Q, a, p) {
+            if (!P) return Q;
+            if (!Q) return P;
+            if (P[0] === Q[0] && P[1] === Q[1]) {
+                // Point doubling
+                if (P[1] === 0) return null;
+                let s = mod((3 * P[0] * P[0] + a) * modInverse(2 * P[1], p), p);
+                let x = mod(s * s - 2 * P[0], p);
+                let y = mod(s * (P[0] - x) - P[1], p);
+                return [x, y];
+            }
+            if (P[0] === Q[0]) return null; // Point at infinity
+
+            let s = mod((Q[1] - P[1]) * modInverse(mod(Q[0] - P[0], p), p), p);
+            let x = mod(s * s - P[0] - Q[0], p);
+            let y = mod(s * (P[0] - x) - P[1], p);
+            return [x, y];
+        }
+
+        function eccScalarMul(k, P, a, p) {
+            let result = null;
+            let addend = P;
+            let steps = [];
+            while (k > 0) {
+                if (k & 1) {
+                    result = eccPointAdd(result, addend, a, p);
+                    steps.push({ op: 'add', point: result ? [...result] : null });
+                }
+                addend = eccPointAdd(addend, addend, a, p);
+                steps.push({ op: 'double', point: addend ? [...addend] : null });
+                k >>= 1;
+            }
+            return { result, steps };
+        }
+
+        function eccFindPoints(a, b, p) {
+            let points = [];
+            for (let x = 0; x < p; x++) {
+                let rhs = mod(x * x * x + a * x + b, p);
+                let y = eccModSqrt(rhs, p);
+                if (y !== null) {
+                    points.push([x, y]);
+                    if (y !== 0) points.push([x, mod(p - y, p)]);
+                }
+            }
+            return points;
+        }
+
+        function eccSetupCurve() {
+            clearLog('ecc-log');
+            const a = parseInt(document.getElementById('ecc-a').value);
+            const b = parseInt(document.getElementById('ecc-b').value);
+            const p = parseInt(document.getElementById('ecc-p').value);
+
+            if (!isPrime(p)) {
+                addLog('ecc-log', `❌ ${p} is not prime!`, 'warn');
+                return;
+            }
+
+            // Check discriminant
+            const disc = mod(4 * a * a * a + 27 * b * b, p);
+            if (disc === 0) {
+                addLog('ecc-log', `❌ Curve is singular! 4a³ + 27b² ≡ 0 (mod ${p})`, 'warn');
+                return;
+            }
+
+            addLog('ecc-log', `Setting up curve: y² = x³ + ${a}x + ${b} (mod ${p})`, 'step');
+            addLog('ecc-log', `Discriminant check: 4(${a})³ + 27(${b})² ≡ ${disc} (mod ${p}) ≠ 0 ✓`, 'math');
+
+            const points = eccFindPoints(a, b, p);
+            addLog('ecc-log', `Found ${points.length} points on the curve (+ point at infinity)`, 'result');
+
+            eccState = { a, b, p, points };
+
+            const infoDiv = document.getElementById('ecc-curve-info');
+            infoDiv.style.display = 'block';
+            infoDiv.innerHTML = `
+                <span class="label">Curve:</span> <span class="value">y² = x³ + ${a}x + ${b} (mod ${p})</span><br>
+                <span class="label">Points on curve:</span> <span class="value">${points.length} + ∞</span><br>
+                <span class="label">Sample points:</span><br>
+                ${points.slice(0, 15).map(pt => `<span class="ecc-point">(${pt[0]}, ${pt[1]})</span>`).join(' ')}
+                ${points.length > 15 ? '...' : ''}
+            `;
+
+            drawECCCurve();
+        }
+
+        function eccPreset() {
+            document.getElementById('ecc-a').value = 2;
+            document.getElementById('ecc-b').value = 3;
+            document.getElementById('ecc-p').value = 97;
+            document.getElementById('ecc-gx').value = 3;
+            document.getElementById('ecc-gy').value = 6;
+            eccSetupCurve();
+        }
+
+        function eccGenerateKeys() {
+            if (!eccState.p) {
+                addLog('ecc-log', '❌ Setup curve first!', 'warn');
+                return;
+            }
+
+            const gx = parseInt(document.getElementById('ecc-gx').value);
+            const gy = parseInt(document.getElementById('ecc-gy').value);
+            const k = parseInt(document.getElementById('ecc-k').value);
+
+            // Verify point on curve
+            const lhs = mod(gy * gy, eccState.p);
+            const rhs = mod(gx * gx * gx + eccState.a * gx + eccState.b, eccState.p);
+            if (lhs !== rhs) {
+                addLog('ecc-log', `❌ G=(${gx},${gy}) is NOT on the curve! ${lhs} ≠ ${rhs}`, 'warn');
+                return;
+            }
+
+            addLog('ecc-log', `G = (${gx}, ${gy}) is on the curve ✓`, 'result');
+            addLog('ecc-log', `Computing Q = ${k} × G using double-and-add...`, 'step');
+
+            const { result, steps } = eccScalarMul(k, [gx, gy], eccState.a, eccState.p);
+
+            addLog('ecc-log', `Q = ${k}G = (${result[0]}, ${result[1]})`, 'result');
+
+            eccState.G = [gx, gy];
+            eccState.k = k;
+            eccState.Q = result;
+
+            const resDiv = document.getElementById('ecc-key-result');
+            resDiv.style.display = 'block';
+            resDiv.innerHTML = `
+                <span class="label">Generator G =</span> <span class="ecc-point">(${gx}, ${gy})</span><br>
+                <span class="label">Private key k =</span> <span class="highlight">${k}</span><br>
+                <span class="label">Public key Q = kG =</span> <span class="ecc-point success">(${result[0]}, ${result[1]})</span>
+            `;
+
+            drawECCCurve();
+        }
+
+        function eccComputeScalarMul() {
+            eccGenerateKeys();
+        }
+
+        function eccDHSimulation() {
+            if (!eccState.G) {
+                addLog('ecc-log', '❌ Setup curve and generator point first!', 'warn');
+                return;
+            }
+
+            clearLog('ecc-log');
+            const ak = parseInt(document.getElementById('ecc-alice-k').value);
+            const bk = parseInt(document.getElementById('ecc-bob-k').value);
+            const G = eccState.G;
+
+            addLog('ecc-log', `=== ECDH Key Exchange ===`, 'step');
+            addLog('ecc-log', `Curve: y² = x³ + ${eccState.a}x + ${eccState.b} (mod ${eccState.p})`, 'math');
+            addLog('ecc-log', `Generator: G = (${G[0]}, ${G[1]})`, 'math');
+
+            // Alice computes public key
+            const alicePub = eccScalarMul(ak, G, eccState.a, eccState.p).result;
+            addLog('ecc-log', `Alice: A = ${ak} × G = (${alicePub[0]}, ${alicePub[1]})`, 'result');
+
+            // Bob computes public key
+            const bobPub = eccScalarMul(bk, G, eccState.a, eccState.p).result;
+            addLog('ecc-log', `Bob: B = ${bk} × G = (${bobPub[0]}, ${bobPub[1]})`, 'result');
+
+            // Shared secrets
+            const aliceShared = eccScalarMul(ak, bobPub, eccState.a, eccState.p).result;
+            addLog('ecc-log', `Alice computes: ${ak} × B = (${aliceShared[0]}, ${aliceShared[1]})`, 'math');
+
+            const bobShared = eccScalarMul(bk, alicePub, eccState.a, eccState.p).result;
+            addLog('ecc-log', `Bob computes: ${bk} × A = (${bobShared[0]}, ${bobShared[1]})`, 'math');
+
+            const match = aliceShared[0] === bobShared[0] && aliceShared[1] === bobShared[1];
+            addLog('ecc-log', match ? `✅ Shared secrets match!` : `❌ Secrets don't match!`, match ? 'result' : 'warn');
+
+            document.getElementById('ecc-entity-row').style.display = 'flex';
+            document.getElementById('ecc-alice-data').innerHTML = `
+                <span class="key-label">Private:</span> a = ${ak}<br>
+                <span class="key-label">Public:</span> A = (${alicePub[0]}, ${alicePub[1]})<br>
+                <span class="key-label">Shared:</span> <span style="color:#00c853">(${aliceShared[0]}, ${aliceShared[1]})</span>
+            `;
+            document.getElementById('ecc-bob-data').innerHTML = `
+                <span class="key-label">Private:</span> b = ${bk}<br>
+                <span class="key-label">Public:</span> B = (${bobPub[0]}, ${bobPub[1]})<br>
+                <span class="key-label">Shared:</span> <span style="color:#00c853">(${bobShared[0]}, ${bobShared[1]})</span>
+            `;
+
+            const resDiv = document.getElementById('ecc-dh-result');
+            resDiv.style.display = 'block';
+            resDiv.innerHTML = `
+                <span class="label">Alice's shared secret:</span> <span class="ecc-point">(${aliceShared[0]}, ${aliceShared[1]})</span><br>
+                <span class="label">Bob's shared secret:</span> <span class="ecc-point">(${bobShared[0]}, ${bobShared[1]})</span><br>
+                <br>${match ? '<span class="success">✅ Both parties computed the same shared secret!</span>' : '<span class="highlight">❌ Error in computation</span>'}
+            `;
+
+            eccState.alicePub = alicePub;
+            eccState.bobPub = bobPub;
+            eccState.sharedSecret = aliceShared;
+            drawECCCurve();
+        }
+
+        // ============ ECC CANVAS ============
+        function drawECCCurve() {
+            const canvas = document.getElementById('ecc-canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = canvas.parentElement.clientWidth;
+            canvas.height = canvas.parentElement.clientHeight;
+
+            const w = canvas.width, h = canvas.height;
+            ctx.clearRect(0, 0, w, h);
+
+            if (!eccState.p) {
+                ctx.fillStyle = '#666699';
+                ctx.font = '16px Segoe UI';
+                ctx.textAlign = 'center';
+                ctx.fillText('Setup curve parameters to see the visualization', w / 2, h / 2);
+                return;
+            }
+
+            const padding = 40;
+            const plotW = w - 2 * padding;
+            const plotH = h - 2 * padding;
+
+            // Map point to canvas
+            function mapX(x) { return padding + (x / eccState.p) * plotW; }
+            function mapY(y) { return h - padding - (y / eccState.p) * plotH; }
+
+            // Grid
+            ctx.strokeStyle = 'rgba(50, 50, 100, 0.2)';
+            ctx.lineWidth = 0.5;
+            for (let i = 0; i <= 10; i++) {
+                let x = padding + (i / 10) * plotW;
+                let y = padding + (i / 10) * plotH;
+                ctx.beginPath(); ctx.moveTo(x, padding); ctx.lineTo(x, h - padding); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(padding, y); ctx.lineTo(w - padding, y); ctx.stroke();
+            }
+
+            // Axes
+            ctx.strokeStyle = 'rgba(100, 100, 200, 0.5)';
+            ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(padding, h - padding); ctx.lineTo(w - padding, h - padding); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(padding, h - padding); ctx.lineTo(padding, padding); ctx.stroke();
+
+            // Labels
+            ctx.fillStyle = '#666699';
+            ctx.font = '10px Segoe UI';
+            ctx.textAlign = 'center';
+            ctx.fillText('0', padding, h - padding + 15);
+            ctx.fillText(eccState.p.toString(), w - padding, h - padding + 15);
+            ctx.save();
+            ctx.translate(padding - 15, padding);
+            ctx.fillText(eccState.p.toString(), 0, 0);
+            ctx.restore();
+
+            // Plot points
+            if (eccState.points) {
+                eccState.points.forEach(pt => {
+                    ctx.fillStyle = 'rgba(123, 47, 247, 0.6)';
+                    ctx.beginPath();
+                    ctx.arc(mapX(pt[0]), mapY(pt[1]), 3, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+            }
+
+            // Highlight G
+            if (eccState.G) {
+                ctx.fillStyle = '#00d2ff';
+                ctx.strokeStyle = '#00d2ff';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(mapX(eccState.G[0]), mapY(eccState.G[1]), 7, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+                ctx.fillStyle = '#00d2ff';
+                ctx.font = 'bold 11px Segoe UI';
+                ctx.fillText('G', mapX(eccState.G[0]) + 12, mapY(eccState.G[1]) - 5);
+            }
+
+            // Highlight Q
+            if (eccState.Q) {
+                ctx.fillStyle = '#ff6b6b';
+                ctx.strokeStyle = '#ff6b6b';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(mapX(eccState.Q[0]), mapY(eccState.Q[1]), 7, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+                ctx.fillStyle = '#ff6b6b';
+                ctx.font = 'bold 11px Segoe UI';
+                ctx.fillText('Q', mapX(eccState.Q[0]) + 12, mapY(eccState.Q[1]) - 5);
+            }
+
+            // Highlight ECDH points
+            if (eccState.alicePub) {
+                ctx.fillStyle = '#ff6b9d';
+                ctx.beginPath();
+                ctx.arc(mapX(eccState.alicePub[0]), mapY(eccState.alicePub[1]), 6, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillText('A', mapX(eccState.alicePub[0]) + 10, mapY(eccState.alicePub[1]) - 5);
+            }
+            if (eccState.bobPub) {
+                ctx.fillStyle = '#00d2ff';
+                ctx.beginPath();
+                ctx.arc(mapX(eccState.bobPub[0]), mapY(eccState.bobPub[1]), 6, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillText('B', mapX(eccState.bobPub[0]) + 10, mapY(eccState.bobPub[1]) - 5);
+            }
+            if (eccState.sharedSecret) {
+                ctx.fillStyle = '#00c853';
+                ctx.strokeStyle = '#00c853';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(mapX(eccState.sharedSecret[0]), mapY(eccState.sharedSecret[1]), 8, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.arc(mapX(eccState.sharedSecret[0]), mapY(eccState.sharedSecret[1]), 4, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillText('S', mapX(eccState.sharedSecret[0]) + 12, mapY(eccState.sharedSecret[1]) - 5);
+            }
+
+            // Title
+            ctx.fillStyle = '#aaaadd';
+            ctx.font = '13px Segoe UI';
+            ctx.textAlign = 'center';
+            ctx.fillText(`y² = x³ + ${eccState.a}x + ${eccState.b} (mod ${eccState.p}) — ${eccState.points ? eccState.points.length : 0} points`, w / 2, 20);
+
+            // Legend
+            const legendX = w - 150;
+            ctx.font = '10px Segoe UI';
+            ctx.textAlign = 'left';
+            
+            ctx.fillStyle = 'rgba(123, 47, 247, 0.6)';
+            ctx.beginPath(); ctx.arc(legendX, 40, 4, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#aaaadd'; ctx.fillText('Curve points', legendX + 10, 43);
+
+            if (eccState.G) {
+                ctx.fillStyle = '#00d2ff';
+                ctx.beginPath(); ctx.arc(legendX, 55, 4, 0, Math.PI * 2); ctx.fill();
+                ctx.fillStyle = '#aaaadd'; ctx.fillText('Generator G', legendX + 10, 58);
+            }
+            if (eccState.Q) {
+                ctx.fillStyle = '#ff6b6b';
+                ctx.beginPath(); ctx.arc(legendX, 70, 4, 0, Math.PI * 2); ctx.fill();
+                ctx.fillStyle = '#aaaadd'; ctx.fillText('Public key Q', legendX + 10, 73);
+            }
+            if (eccState.sharedSecret) {
+                ctx.fillStyle = '#00c853';
+                ctx.beginPath(); ctx.arc(legendX, 85, 4, 0, Math.PI * 2); ctx.fill();
+                ctx.fillStyle = '#aaaadd'; ctx.fillText('Shared secret', legendX + 10, 88);
+            }
+        }
+
+        // ============ DHKE IMPLEMENTATION ============
+        let dhkeState = { step: 0 };
+
+        function updateDHKESteps(step) {
+            for (let i = 1; i <= 4; i++) {
+                const el = document.getElementById('dhke-step-' + i);
+                const line = document.getElementById('dhke-line-' + (i - 1));
+                el.classList.remove('active', 'completed');
+                if (line) line.classList.remove('completed');
+                if (i < step) {
+                    el.classList.add('completed');
+                    if (line) line.classList.add('completed');
+                } else if (i === step) {
+                    el.classList.add('active');
+                }
+            }
+        }
+
+        function dhkeReset() {
+            dhkeState = { step: 0 };
+            updateDHKESteps(1);
+            clearLog('dhke-log');
+            addLog('dhke-log', 'Reset. Configure parameters and start again.', 'step');
+            document.getElementById('dhke-alice-secret').textContent = '—';
+            document.getElementById('dhke-alice-public').textContent = '—';
+            document.getElementById('dhke-alice-shared').textContent = '—';
+            document.getElementById('dhke-bob-secret').textContent = '—';
+            document.getElementById('dhke-bob-public').textContent = '—';
+            document.getElementById('dhke-bob-shared').textContent = '—';
+            document.getElementById('dhke-arrow-1').classList.remove('visible');
+            document.getElementById('dhke-arrow-2').classList.remove('visible');
+            document.getElementById('dhke-result').style.display = 'none';
+            document.getElementById('dhke-eve-result').style.display = 'none';
+            drawDHKECanvas();
+        }
+
+        function dhkeExchange() {
+            clearLog('dhke-log');
+            const p = parseInt(document.getElementById('dhke-p').value);
+            const g = parseInt(document.getElementById('dhke-g').value);
+            const a = parseInt(document.getElementById('dhke-a').value);
+            const b = parseInt(document.getElementById('dhke-b').value);
+
+            if (!isPrime(p)) {
+                addLog('dhke-log', `❌ ${p} is not prime!`, 'warn');
+                return;
+            }
+
+            addLog('dhke-log', `=== Diffie-Hellman Key Exchange ===`, 'step');
+            addLog('dhke-log', `Public parameters: p = ${p}, g = ${g}`, 'math');
+
+            updateDHKESteps(1);
+
+            // Step 1: Public params set
+            addLog('dhke-log', `Both Alice and Bob agree on p=${p} and g=${g}`, 'step');
+
+            // Step 2: Compute public values
+            updateDHKESteps(2);
+            const A = modPow(g, a, p);
+            const B = modPow(g, b, p);
+
+            addLog('dhke-log', `Alice: secret a = ${a}`, 'step');
+            addLog('dhke-log', `Alice computes: A = g^a mod p = ${g}^${a} mod ${p} = ${A}`, 'math');
+            addLog('dhke-log', `Bob: secret b = ${b}`, 'step');
+            addLog('dhke-log', `Bob computes: B = g^b mod p = ${g}^${b} mod ${p} = ${B}`, 'math');
+
+            document.getElementById('dhke-alice-secret').textContent = a;
+            document.getElementById('dhke-alice-public').textContent = A;
+            document.getElementById('dhke-bob-secret').textContent = b;
+            document.getElementById('dhke-bob-public').textContent = B;
+
+            // Step 3: Exchange
+            updateDHKESteps(3);
+            addLog('dhke-log', `Alice sends A=${A} to Bob (public channel)`, 'step');
+            addLog('dhke-log', `Bob sends B=${B} to Alice (public channel)`, 'step');
+
+            document.getElementById('dhke-arrow-1').classList.add('visible');
+            document.getElementById('dhke-arrow-2').classList.add('visible');
+            document.getElementById('dhke-arrow-1-label').textContent = `A = ${A}`;
+            document.getElementById('dhke-arrow-2-label').textContent = `B = ${B}`;
+
+            // Step 4: Compute shared secret
+            updateDHKESteps(4);
+            const sAlice = modPow(B, a, p);
+            const sBob = modPow(A, b, p);
+
+            addLog('dhke-log', `Alice computes: s = B^a mod p = ${B}^${a} mod ${p} = ${sAlice}`, 'math');
+            addLog('dhke-log', `Bob computes: s = A^b mod p = ${A}^${b} mod ${p} = ${sBob}`, 'math');
+
+            document.getElementById('dhke-alice-shared').innerHTML = `<span style="color:#00c853;font-weight:bold">${sAlice}</span>`;
+            document.getElementById('dhke-bob-shared').innerHTML = `<span style="color:#00c853;font-weight:bold">${sBob}</span>`;
+
+            const match = sAlice === sBob;
+            addLog('dhke-log', match 
+                ? `✅ Shared secrets match! s = ${sAlice}` 
+                : `❌ Secrets don't match! ${sAlice} ≠ ${sBob}`, 
+                match ? 'result' : 'warn');
+
+            addLog('dhke-log', `Both computed: g^(ab) mod p = ${g}^(${a}×${b}) mod ${p} = ${sAlice}`, 'result');
+
+            dhkeState = { p, g, a, b, A, B, sAlice, sBob, step: 4 };
+
+            const resDiv = document.getElementById('dhke-result');
+            resDiv.style.display = 'block';
+            resDiv.innerHTML = `
+                <span class="label">Public parameters:</span> <span class="value">p = ${p}, g = ${g}</span><br>
+                <span class="label">Alice:</span> secret a = <span class="highlight">${a}</span>, public A = <span class="value">${A}</span><br>
+                <span class="label">Bob:</span> secret b = <span class="highlight">${b}</span>, public B = <span class="value">${B}</span><br>
+                <br>
+                <span class="label">Alice's shared secret:</span> B^a mod p = ${B}^${a} mod ${p} = <span class="success">${sAlice}</span><br>
+                <span class="label">Bob's shared secret:</span> A^b mod p = ${A}^${b} mod ${p} = <span class="success">${sBob}</span><br>
+                <br>
+                ${match ? `<span class="success">✅ Shared secret established: ${sAlice}</span>` : `<span class="highlight">❌ Error in exchange</span>`}
+            `;
+
+            // Eve's perspective
+            const eveDiv = document.getElementById('dhke-eve-result');
+            eveDiv.style.display = 'block';
+            eveDiv.innerHTML = `
+                <span class="label">🕵️ Eve sees:</span><br>
+                <span class="value">p = ${p}, g = ${g}</span><br>
+                <span class="value">A = ${A} (from Alice)</span><br>
+                <span class="value">B = ${B} (from Bob)</span><br>
+                <br>
+                <span class="label">Eve needs to solve:</span><br>
+                <span class="highlight">Find a such that ${g}^a ≡ ${A} (mod ${p})</span><br>
+                <span class="highlight">OR find b such that ${g}^b ≡ ${B} (mod ${p})</span><br>
+                <br>
+                <span class="log-warn">⚠️ This is the Discrete Logarithm Problem — computationally infeasible for large primes!</span><br>
+                <span style="color:#555588;font-size:0.9em">(With small numbers like these, brute force is trivial, but with 2048-bit primes it's impossible)</span>
+            `;
+
+            drawDHKECanvas();
+        }
+
+        function dhkeStepByStep() {
+            const p = parseInt(document.getElementById('dhke-p').value);
+            const g = parseInt(document.getElementById('dhke-g').value);
+            const a = parseInt(document.getElementById('dhke-a').value);
+            const b = parseInt(document.getElementById('dhke-b').value);
+
+            dhkeState.step = (dhkeState.step || 0) + 1;
+
+            if (dhkeState.step === 1) {
+                clearLog('dhke-log');
+                if (!isPrime(p)) {
+                    addLog('dhke-log', `❌ ${p} is not prime!`, 'warn');
+                    dhkeState.step = 0;
+                    return;
+                }
+                updateDHKESteps(1);
+                addLog('dhke-log', `Step 1: Public parameters agreed: p = ${p}, g = ${g}`, 'step');
+                dhkeState.p = p; dhkeState.g = g; dhkeState.a = a; dhkeState.b = b;
+            } else if (dhkeState.step === 2) {
+                updateDHKESteps(2);
+                const A = modPow(g, a, p);
+                const B = modPow(g, b, p);
+                dhkeState.A = A; dhkeState.B = B;
+                addLog('dhke-log', `Step 2: Computing public values`, 'step');
+                addLog('dhke-log', `A = ${g}^${a} mod ${p} = ${A}`, 'math');
+                addLog('dhke-log', `B = ${g}^${b} mod ${p} = ${B}`, 'math');
+                document.getElementById('dhke-alice-secret').textContent = a;
+                document.getElementById('dhke-alice-public').textContent = A;
+                document.getElementById('dhke-bob-secret').textContent = b;
+                document.getElementById('dhke-bob-public').textContent = B;
+            } else if (dhkeState.step === 3) {
+                updateDHKESteps(3);
+                addLog('dhke-log', `Step 3: Exchange public values over public channel`, 'step');
+                addLog('dhke-log', `Alice → Bob: A = ${dhkeState.A}`, 'math');
+                addLog('dhke-log', `Bob → Alice: B = ${dhkeState.B}`, 'math');
+                document.getElementById('dhke-arrow-1').classList.add('visible');
+                document.getElementById('dhke-arrow-2').classList.add('visible');
+                document.getElementById('dhke-arrow-1-label').textContent = `A = ${dhkeState.A}`;
+                document.getElementById('dhke-arrow-2-label').textContent = `B = ${dhkeState.B}`;
+            } else if (dhkeState.step === 4) {
+                updateDHKESteps(4);
+                const sAlice = modPow(dhkeState.B, a, p);
+                const sBob = modPow(dhkeState.A, b, p);
+                addLog('dhke-log', `Step 4: Computing shared secret`, 'step');
+                addLog('dhke-log', `Alice: s = ${dhkeState.B}^${a} mod ${p} = ${sAlice}`, 'math');
+                addLog('dhke-log', `Bob: s = ${dhkeState.A}^${b} mod ${p} = ${sBob}`, 'math');
+                addLog('dhke-log', `✅ Shared secret: ${sAlice}`, 'result');
+                document.getElementById('dhke-alice-shared').innerHTML = `<span style="color:#00c853;font-weight:bold">${sAlice}</span>`;
+                document.getElementById('dhke-bob-shared').innerHTML = `<span style="color:#00c853;font-weight:bold">${sBob}</span>`;
+                dhkeState.sAlice = sAlice; dhkeState.sBob = sBob;
+                drawDHKECanvas();
+            } else {
+                dhkeState.step = 0;
+                addLog('dhke-log', `Exchange complete! Click "Reset" to start over.`, 'result');
+            }
+        }
+
+        // ============ DHKE CANVAS ============
+        function drawDHKECanvas() {
+            const canvas = document.getElementById('dhke-canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = canvas.parentElement.clientWidth;
+            canvas.height = canvas.parentElement.clientHeight;
+
+            const w = canvas.width, h = canvas.height;
+            ctx.clearRect(0, 0, w, h);
+
+            if (!dhkeState.p || !dhkeState.g) {
+                ctx.fillStyle = '#666699';
+                ctx.font = '16px Segoe UI';
+                ctx.textAlign = 'center';
+                ctx.fillText('Perform key exchange to see the visualization', w / 2, h / 2);
+                return;
+            }
+
+            const p = dhkeState.p;
+            const g = dhkeState.g;
+
+            // Title
+            ctx.fillStyle = '#aaaadd';
+            ctx.font = '13px Segoe UI';
+            ctx.textAlign = 'center';
+            ctx.fillText(`Powers of g=${g} mod p=${p} — Cyclic Group Visualization`, w / 2, 20);
+
+            // Draw the cyclic group as a circle
+            const centerX = w / 2;
+            const centerY = h / 2 + 15;
+            const radius = Math.min(w, h) / 2 - 60;
+
+            // Compute all powers of g mod p
+            let powers = [];
+            let seen = new Set();
+            let current = 1;
+            for (let i = 0; i < p; i++) {
+                if (seen.has(current)) break;
+                powers.push(current);
+                seen.add(current);
+                current = mod(current * g, p);
+            }
+
+            const n = powers.length;
+
+            // Draw circle
+            ctx.strokeStyle = 'rgba(100, 100, 200, 0.2)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Draw points and connections
+            powers.forEach((val, i) => {
+                const angle = (i / n) * Math.PI * 2 - Math.PI / 2;
+                const x = centerX + radius * Math.cos(angle);
+                const y = centerY + radius * Math.sin(angle);
+
+                // Connection to next
+                if (i < n - 1) {
+                    const nextAngle = ((i + 1) / n) * Math.PI * 2 - Math.PI / 2;
+                    const nx = centerX + radius * Math.cos(nextAngle);
+                    const ny = centerY + radius * Math.sin(nextAngle);
+                    ctx.strokeStyle = 'rgba(123, 47, 247, 0.3)';
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.moveTo(x, y);
+                    ctx.lineTo(nx, ny);
+                    ctx.stroke();
+                }
+
+                // Determine color
+                let color = 'rgba(123, 47, 247, 0.6)';
+                let size = 4;
+                let label = '';
+
+                if (dhkeState.A !== undefined && val === dhkeState.A) {
+                    color = '#ff6b9d';
+                    size = 8;
+                    label = `A=${val}`;
+                }
+                if (dhkeState.B !== undefined && val === dhkeState.B) {
+                    color = '#00d2ff';
+                    size = 8;
+                    label = `B=${val}`;
+                }
+                if (dhkeState.sAlice !== undefined && val === dhkeState.sAlice) {
+                    color = '#00c853';
+                    size = 10;
+                    label = `S=${val}`;
+                }
+                if (i === 0) {
+                    label = `g⁰=1`;
+                }
+                if (i === 1) {
+                    label = `g¹=${val}`;
+                }
+
+                // Draw point
+                ctx.fillStyle = color;
+                ctx.beginPath();
+                ctx.arc(x, y, size, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Draw label (for small groups or special points)
+                if (label || n <= 30) {
+                    ctx.fillStyle = color;
+                    ctx.font = (size > 4 ? 'bold ' : '') + '10px Courier New';
+                    ctx.textAlign = 'center';
+                    const labelRadius = radius + 20;
+                    const lx = centerX + labelRadius * Math.cos(angle);
+                    const ly = centerY + labelRadius * Math.sin(angle);
+                    ctx.fillText(label || `${val}`, lx, ly + 3);
+                }
+            });
+
+            // Center info
+            ctx.fillStyle = '#7b2ff7';
+            ctx.font = 'bold 12px Segoe UI';
+            ctx.textAlign = 'center';
+            ctx.fillText(`Order: ${n}`, centerX, centerY - 10);
+            ctx.font = '11px Courier New';
+            ctx.fillStyle = '#8888bb';
+            ctx.fillText(`⟨${g}⟩ mod ${p}`, centerX, centerY + 8);
+
+            // Legend
+            ctx.font = '10px Segoe UI';
+            ctx.textAlign = 'left';
+            let ly = h - 70;
+            
+            if (dhkeState.A !== undefined) {
+                ctx.fillStyle = '#ff6b9d';
+                ctx.beginPath(); ctx.arc(15, ly, 5, 0, Math.PI * 2); ctx.fill();
+                ctx.fillStyle = '#aaaadd'; ctx.fillText(`Alice's public A = g^a = ${dhkeState.A}`, 25, ly + 4);
+                ly += 18;
+            }
+            if (dhkeState.B !== undefined) {
+                ctx.fillStyle = '#00d2ff';
+                ctx.beginPath(); ctx.arc(15, ly, 5, 0, Math.PI * 2); ctx.fill();
+                ctx.fillStyle = '#aaaadd'; ctx.fillText(`Bob's public B = g^b = ${dhkeState.B}`, 25, ly + 4);
+                ly += 18;
+            }
+            if (dhkeState.sAlice !== undefined) {
+                ctx.fillStyle = '#00c853';
+                ctx.beginPath(); ctx.arc(15, ly, 5, 0, Math.PI * 2); ctx.fill();
+                ctx.fillStyle = '#aaaadd'; ctx.fillText(`Shared secret S = g^(ab) = ${dhkeState.sAlice}`, 25, ly + 4);
+            }
+        }
+
+        // ============ INITIAL DRAW ============
+        window.addEventListener('resize', () => {
+            if (document.getElementById('tab-rsa').classList.contains('active')) drawRSACanvas();
+            if (document.getElementById('tab-ecc').classList.contains('active')) drawECCCurve();
+            if (document.getElementById('tab-dhke').classList.contains('active')) drawDHKECanvas();
+        });
+
+        setTimeout(() => {
+            drawRSACanvas();
+        }, 100);
+    </script>
+</body>
+</html>
