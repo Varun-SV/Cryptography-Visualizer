@@ -56,6 +56,6 @@ An interactive web-based tool for visualizing **RSA**, **Elliptic Curve Cryptogr
 Simply open `index.html` in any modern web browser:
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/crypto-visualizer.git
+git clone https://github.com/Varun-SV/crypto-visualizer.git
 cd crypto-visualizer
 open index.html
