@@ -4,9 +4,7 @@ An interactive web-based tool for visualizing **RSA**, **Elliptic Curve Cryptogr
 
 ## 🌐 Live Demo
 
-👉 **[Launch Visualizer](https://Varun-SV.github.io/crypto-visualizer/)**
-
-> Replace `YOUR_USERNAME` with your GitHub username after deployment.
+👉 **[Launch Visualizer](https://varun-sv.github.io/Cryptography-Visualizer/)**
 
 ## 📸 Screenshots
 
@@ -56,6 +54,6 @@ An interactive web-based tool for visualizing **RSA**, **Elliptic Curve Cryptogr
 Simply open `index.html` in any modern web browser:
 
 ```bash
-git clone https://github.com/Varun-SV/crypto-visualizer.git
-cd crypto-visualizer
+git clone https://github.com/Varun-SV/Crypto-Visualizer.git
+cd Crypto-Visualizer
 open index.html
